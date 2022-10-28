@@ -6,18 +6,18 @@ namespace Order.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OrderController2 : ControllerBase
+public class OrdersController : ControllerBase
 {
     private readonly ICartApiService _cartApiService;
     private readonly IPaymentApiService _paymentApiService;
     private readonly IOrderService _orderService;
-    private readonly ILogger<OrderController2> _logger;
+    private readonly ILogger<OrdersController> _logger;
 
-    public OrderController2(
+    public OrdersController(
         ICartApiService cartApiService,
         IPaymentApiService paymentApiService,
         IOrderService orderService,
-        ILogger<OrderController2> logger)
+        ILogger<OrdersController> logger)
     {
         _logger = logger;
         _orderService = orderService;
@@ -25,8 +25,8 @@ public class OrderController2 : ControllerBase
         _paymentApiService = paymentApiService;
     }
 
-    [HttpPost, Route("finalize2", Name = nameof(FinalizeOrders2))]
-    public async Task<IActionResult> FinalizeOrders2()
+    [HttpPost, Route("finalize", Name = nameof(FinalizeOrders))]
+    public async Task<IActionResult> FinalizeOrders()
     {
         _logger.LogInformation("Finalizando pedidos...");
 
@@ -36,7 +36,7 @@ public class OrderController2 : ControllerBase
         var paymentResponse = await _paymentApiService.PreAuthorizeOrders();
         _logger.LogInformation($"Pedidos pré autorizados - {paymentResponse}");
 
-        await _orderService.CreateOrder2();
+        await _orderService.CreateOrder();
 
         return Accepted("Pedidos aceitos!");
     }

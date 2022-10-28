@@ -1,2 +1,2 @@
 ﻿namespace Saga.Contracts;
-public record IntegrateIndustryCommand(Guid OrderId, string CustomerName);
+public record IntegrateIndustryCommand(Guid OrderId, string CustomerName, DateTime Timestamp);

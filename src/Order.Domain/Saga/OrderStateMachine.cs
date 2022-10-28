@@ -2,7 +2,7 @@
 using Saga.Contracts;
 
 namespace Order.Domain.Saga;
-public class OrderStateMachine2 : MassTransitStateMachine<OrderState2>
+public class OrderStateMachine : MassTransitStateMachine<OrderState>
 {
     public State OrderCreatedState { get; private set; }
     public State PaymentAuthorizedState { get; private set; }
@@ -10,13 +10,13 @@ public class OrderStateMachine2 : MassTransitStateMachine<OrderState2>
     public State PaymentConfirmedState { get; private set; }
     public State OrderFinalizeState { get; private set; }
 
-    public Event<OrderCreatedEvent2> OrderCreatedEvent { get; private set; }
-    public Event<PaymentAuthorizedEvent2> PaymentAuthorizedEvent { get; set; }
-    public Event<IndustryIntegratedEvent2> IndustryIntegratedEvent { get; private set; }
-    public Event<PaymentConfirmedEvent2> PaymentConfirmedEvent { get; private set; }
-    public Event<OrderProcessedEvent2> OrderProcessedEvent { get; private set; }
+    public Event<OrderCreatedEvent> OrderCreatedEvent { get; private set; }
+    public Event<PaymentAuthorizedEvent> PaymentAuthorizedEvent { get; set; }
+    public Event<IndustryIntegratedEvent> IndustryIntegratedEvent { get; private set; }
+    public Event<PaymentConfirmedEvent> PaymentConfirmedEvent { get; private set; }
+    public Event<OrderProcessedEvent> OrderProcessedEvent { get; private set; }
 
-    public OrderStateMachine2()
+    public OrderStateMachine()
 	{
         Event(() => OrderCreatedEvent, x => x.CorrelateById(m => m.Message.OrderId));
         Event(() => PaymentAuthorizedEvent, x => x.CorrelateById(m => m.Message.OrderId));
@@ -51,6 +51,17 @@ public class OrderStateMachine2 : MassTransitStateMachine<OrderState2>
             When(OrderProcessedEvent)
                 .TransitionTo(OrderFinalizeState));
 
-        SetCompletedWhenFinalized();
+        //SetCompleted(async instance =>
+        //{
+        //    var currentState = await this.GetState(instance);
+
+        //    return OrderFinalizeState.Equals(currentState);
+        //});
+
+        //During(PaymentConfirmedState,
+        //    When(OrderProcessedEvent)
+        //        .Finalize());
+
+        //SetCompletedWhenFinalized();
     }
 }

@@ -42,11 +42,6 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
                     cfg.ConfigureEndpoints(ctx);
                     cfg.ConfigureEndpoints(ctx, new KebabCaseEndpointNameFormatter("saga-example", false));
-
-                    //cfg.ServiceInstance(instance =>
-                    //{
-                    //    instance.ConfigureEndpoints(ctx, new KebabCaseEndpointNameFormatter("saga-example", false));
-                    //});
                 });
             });
 

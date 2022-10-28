@@ -2,9 +2,9 @@
 
 namespace Order.Domain.Saga;
 
-public class OrderStateMachineDefinition2 : SagaDefinition<OrderState2>
+public class OrderStateMachineDefinition : SagaDefinition<OrderState>
 {    
-    protected override void ConfigureSaga(IReceiveEndpointConfigurator endpointConfigurator, ISagaConfigurator<OrderState2> sagaConfigurator)
+    protected override void ConfigureSaga(IReceiveEndpointConfigurator endpointConfigurator, ISagaConfigurator<OrderState> sagaConfigurator)
     {
         endpointConfigurator.UseMessageRetry(r => r.Intervals(500, 5000, 10000));
         endpointConfigurator.UseInMemoryOutbox();

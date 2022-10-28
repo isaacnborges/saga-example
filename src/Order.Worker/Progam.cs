@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Order.Domain.Saga;
 using Saga.Core;
 using Saga.Core.Extensions;
 using Serilog;
@@ -43,13 +42,6 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
                     cfg.ConfigureEndpoints(ctx);
                 });
-
-                //x.AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
-                //    .MongoDbRepository(r =>
-                //    {
-                //        r.Connection = "mongodb://mongo:mongo@localhost:27017";
-                //        r.DatabaseName = "saga-orders";
-                //    });
             });
 
             services.AddOptions<MassTransitHostOptions>().Configure(options =>

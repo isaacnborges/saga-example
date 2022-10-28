@@ -15,12 +15,12 @@ public class OrderService : IOrderService
         _bus = bus;
     }
 
-    public async Task CreateOrder2()
+    public async Task CreateOrder()
     {
         var order = new Faker<Models.Order>().CustomInstantiator(x => new Models.Order(Guid.NewGuid(), x.Person.FullName)).Generate();
 
         _logger.LogInformation("Pedido criado");
 
-        await _bus.Publish(new OrderCreatedEvent2(order.OrderId, order.CustomerName, InVar.Timestamp));
+        await _bus.Publish(new OrderCreatedEvent(order.OrderId, order.CustomerName, InVar.Timestamp));
     }
 }

@@ -1,5 +1,5 @@
 ﻿namespace Order.Domain.Services;
 public interface IOrderService
 {
-    Task CreateOrder2();
+    Task CreateOrder();
 }

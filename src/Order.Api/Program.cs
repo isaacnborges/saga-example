@@ -42,14 +42,9 @@ builder.Services.AddMassTransit(x =>
         cfg.Host(builder.Configuration.GetConnectionString("RabbitMq"));
 
         cfg.ConfigureEndpoints(ctx);
-
-        cfg.Publish<AuthorizePaymentCommand>(x =>
-        {
-            x.Exclude = true;
-        });
     });
 
-    x.AddSagaStateMachine<OrderStateMachine2, OrderState2>(typeof(OrderStateMachineDefinition2))
+    x.AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
         .MongoDbRepository(r =>
         {
             r.Connection = "mongodb://mongo:mongo@localhost:27017";

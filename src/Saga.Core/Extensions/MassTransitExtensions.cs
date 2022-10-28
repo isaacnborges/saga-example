@@ -13,8 +13,6 @@ public static class MassTransitExtensions
 
             x.UsingRabbitMq((ctx, cfg) =>
             {
-                //cfg.OverrideDefaultBusEndpointQueueName
-
                 cfg.Host(configuration.GetConnectionString("RabbitMq"));
 
                 cfg.ConfigureEndpoints(ctx, new KebabCaseEndpointNameFormatter("saga-example", false));

@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Order.Domain.Saga;
-public class OrderState2 : SagaStateMachineInstance, ISagaVersion
+public class OrderState : SagaStateMachineInstance, ISagaVersion
 {
     [BsonId]
     public Guid CorrelationId { get; set; }
