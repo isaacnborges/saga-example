@@ -24,7 +24,7 @@ public class IntegrateIndustryCommand2Consumer : IConsumer<IntegrateIndustryComm
 
         _logger.LogInformation($"Industry integreated - OrderId: {context.Message.OrderId}");
 
-        await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<IndustryIntegratedEvent>.ShortName);
+        await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<IntegrateIndustryCommand2>.ShortName);
 
         var @event = new IndustryIntegratedEvent2(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
         await _bus.Publish(@event);

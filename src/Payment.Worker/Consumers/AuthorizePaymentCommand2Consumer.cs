@@ -8,9 +8,9 @@ namespace Payment.Worker.Consumers;
 public class AuthorizePaymentCommand2Consumer : IConsumer<AuthorizePaymentCommand2>
 {
     private readonly IBus _bus;
-    private readonly ILogger<AuthorizePaymentCommandConsumer> _logger;
+    private readonly ILogger<AuthorizePaymentCommand2Consumer> _logger;
 
-    public AuthorizePaymentCommand2Consumer(IBus bus, ILogger<AuthorizePaymentCommandConsumer> logger)
+    public AuthorizePaymentCommand2Consumer(IBus bus, ILogger<AuthorizePaymentCommand2Consumer> logger)
     {
         _bus = bus;
         _logger = logger;
@@ -24,7 +24,7 @@ public class AuthorizePaymentCommand2Consumer : IConsumer<AuthorizePaymentComman
 
         _logger.LogInformation($"Payment authorized - OrderId: {context.Message.OrderId}");
 
-        await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentAuthorizedEvent2>.ShortName);
+        await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<AuthorizePaymentCommand2>.ShortName);
 
         var @event = new PaymentAuthorizedEvent2(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
         await _bus.Publish(@event);

@@ -49,18 +49,11 @@ builder.Services.AddMassTransit(x =>
         });
     });
 
-    x.AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
+    x.AddSagaStateMachine<OrderStateMachine2, OrderState2>(typeof(OrderStateMachineDefinition2))
         .MongoDbRepository(r =>
         {
             r.Connection = "mongodb://mongo:mongo@localhost:27017";
             r.DatabaseName = "saga-orders";
-        });
-
-    x.AddSagaStateMachine<OrderStateMachine2, OrderState2>()
-        .MongoDbRepository(r =>
-        {
-            r.Connection = "mongodb://mongo:mongo@localhost:27017";
-            r.DatabaseName = "orders";
         });
 });
 

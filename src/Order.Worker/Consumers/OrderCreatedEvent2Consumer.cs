@@ -22,7 +22,7 @@ public class OrderCreatedEvent2Consumer : IConsumer<OrderCreatedEvent2>
 
         _logger.LogInformation($"Order processed successfully - OrderId: {context.Message.OrderId}");
 
-        await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentAuthorizedEvent>.ShortName);
+        await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<OrderCreatedEvent2>.ShortName);
 
         var command = new AuthorizePaymentCommand2(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
         await _bus.Publish(command);
