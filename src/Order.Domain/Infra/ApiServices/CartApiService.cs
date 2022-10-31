@@ -1,6 +1,7 @@
-﻿using Order.Api.Interfaces;
+﻿using Microsoft.Extensions.Logging;
+using Order.Domain.Interfaces;
 
-namespace Order.Api.ApiServices;
+namespace Order.Domain.Infra.ApiServices;
 
 public class CartApiService : ICartApiService
 {
@@ -17,6 +18,17 @@ public class CartApiService : ICartApiService
     {
         _logger.LogInformation("Integração com serviço de cart iniciada...");
         var requestUri = "cart/finalize";
+        var response = await _httpClient.PutAsync(requestUri, null);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        _logger.LogInformation("Integração com serviço de cart finalizada!");
+
+        return responseContent;
+    }
+
+    public async Task<string> ReopenCart()
+    {
+        _logger.LogInformation("Integração com serviço de cart iniciada...");
+        var requestUri = "cart/reopen";
         var response = await _httpClient.PutAsync(requestUri, null);
         var responseContent = await response.Content.ReadAsStringAsync();
         _logger.LogInformation("Integração com serviço de cart finalizada!");

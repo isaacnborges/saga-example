@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Order.Domain.Infra.ApiServices;
+using Order.Domain.Interfaces;
 using Saga.Core;
 using Saga.Core.Extensions;
 using Serilog;
@@ -22,6 +24,12 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
         .ConfigureHostConfiguration(config => config.AddEnvironmentVariables())
         .ConfigureServices((hostContext, services) =>
         {
+            services.AddHttpClient<ICartApiService, CartApiService>("Cart", client =>
+            {
+                client.BaseAddress = new Uri(hostContext.Configuration["Integrations:Cart:BaseUrl"]);
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+
             var settings = hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>();
 
             services.AddMassTransit(x =>

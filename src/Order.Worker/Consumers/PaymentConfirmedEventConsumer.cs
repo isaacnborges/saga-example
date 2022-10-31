@@ -20,6 +20,8 @@ public class PaymentConfirmedEventConsumer : IConsumer<PaymentConfirmedEvent>
     {
         var timer = Stopwatch.StartNew();
 
+        await Task.Delay(TimeSpan.FromSeconds(5));
+
         _logger.LogInformation($"Payment confirmed - OrderId: {context.Message.OrderId}");
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentConfirmedEvent>.ShortName);

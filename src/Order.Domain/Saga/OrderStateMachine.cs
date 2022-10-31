@@ -7,22 +7,20 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
     public State OrderCreatedState { get; private set; }
     public State PaymentAuthorizedState { get; private set; }
     public State IndustryIntegratedState { get; private set; }
+    public State IndustryFailedState { get; private set; }
     public State PaymentConfirmedState { get; private set; }
     public State OrderFinalizeState { get; private set; }
 
     public Event<OrderCreatedEvent> OrderCreatedEvent { get; private set; }
     public Event<PaymentAuthorizedEvent> PaymentAuthorizedEvent { get; set; }
     public Event<IndustryIntegratedEvent> IndustryIntegratedEvent { get; private set; }
+    public Event<IndustryFailedEvent> IndustryFailedEvent { get; private set; }
     public Event<PaymentConfirmedEvent> PaymentConfirmedEvent { get; private set; }
     public Event<OrderProcessedEvent> OrderProcessedEvent { get; private set; }
 
     public OrderStateMachine()
-	{
-        Event(() => OrderCreatedEvent, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => PaymentAuthorizedEvent, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => IndustryIntegratedEvent, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => PaymentConfirmedEvent, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => OrderProcessedEvent, x => x.CorrelateById(m => m.Message.OrderId));
+    {
+        ConfigureCorrelationId();
 
         InstanceState(x => x.CurrentState);
 
@@ -41,7 +39,9 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
 
         During(PaymentAuthorizedState,
             When(IndustryIntegratedEvent)
-                .TransitionTo(IndustryIntegratedState));
+                .TransitionTo(IndustryIntegratedState),
+            When(IndustryFailedEvent)
+                .TransitionTo(IndustryFailedState));
 
         During(IndustryIntegratedState,
             When(PaymentConfirmedEvent)
@@ -50,18 +50,15 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
         During(PaymentConfirmedState,
             When(OrderProcessedEvent)
                 .TransitionTo(OrderFinalizeState));
+    }
 
-        //SetCompleted(async instance =>
-        //{
-        //    var currentState = await this.GetState(instance);
-
-        //    return OrderFinalizeState.Equals(currentState);
-        //});
-
-        //During(PaymentConfirmedState,
-        //    When(OrderProcessedEvent)
-        //        .Finalize());
-
-        //SetCompletedWhenFinalized();
+    private void ConfigureCorrelationId()
+    {
+        Event(() => OrderCreatedEvent, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => PaymentAuthorizedEvent, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => IndustryIntegratedEvent, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => IndustryFailedEvent, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => PaymentConfirmedEvent, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => OrderProcessedEvent, x => x.CorrelateById(m => m.Message.OrderId));
     }
 }

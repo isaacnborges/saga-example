@@ -1,6 +1,7 @@
-﻿using Order.Api.Interfaces;
+﻿using Microsoft.Extensions.Logging;
+using Order.Domain.Interfaces;
 
-namespace Order.Api.ApiServices;
+namespace Order.Domain.Infra.ApiServices;
 
 public class PaymentApiService : IPaymentApiService
 {

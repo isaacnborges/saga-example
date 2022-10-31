@@ -18,6 +18,14 @@ public class CartController : ControllerBase
     {
         _logger.LogInformation("Cart finalizado");
 
-        return Ok("Cart finalizado");
+        return Ok("Carrinho finalizado");
+    }
+
+    [HttpPut, Route("reopen", Name = nameof(ReopenTruckOrders))]
+    public IActionResult ReopenTruckOrders()
+    {
+        _logger.LogInformation("Reabrir cart");
+
+        return Ok("Carrinho reaberto");
     }
 }

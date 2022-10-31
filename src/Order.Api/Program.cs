@@ -1,13 +1,11 @@
 using MassTransit;
-using Order.Api.ApiServices;
-using Order.Api.Interfaces;
+using Order.Domain.Infra.ApiServices;
+using Order.Domain.Interfaces;
 using Order.Domain.Saga;
 using Order.Domain.Services;
-using Saga.Contracts;
 using Saga.Core;
 using Saga.Core.Extensions;
 using Serilog;
-
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Api");

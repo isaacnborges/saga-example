@@ -1,4 +1,4 @@
-﻿namespace Order.Api.Interfaces;
+﻿namespace Order.Domain.Interfaces;
 
 public interface IPaymentApiService
 {
