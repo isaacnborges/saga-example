@@ -2,6 +2,7 @@
 using MassTransit.Metadata;
 using Microsoft.Extensions.Logging;
 using Order.Domain.Interfaces;
+using Order.Domain.Models;
 using Saga.Contracts;
 using System.Diagnostics;
 
@@ -10,11 +11,19 @@ public class IndustryFailedEventConsumer : IConsumer<IndustryFailedEvent>
 {
     private readonly ICartApiService _cartApiService;
     private readonly ILogger<IndustryFailedEventConsumer> _logger;
+    private readonly IOrderRepository _orderRepository;
+    private readonly IOrderStatusHistoryRepository _orderStatusHistoryRepository;
 
-    public IndustryFailedEventConsumer(ICartApiService cartApiService, ILogger<IndustryFailedEventConsumer> logger)
+    public IndustryFailedEventConsumer(
+        ICartApiService cartApiService, 
+        ILogger<IndustryFailedEventConsumer> logger, 
+        IOrderRepository orderRepository, 
+        IOrderStatusHistoryRepository orderStatusHistoryRepository)
     {
         _cartApiService = cartApiService;
         _logger = logger;
+        _orderRepository = orderRepository;
+        _orderStatusHistoryRepository = orderStatusHistoryRepository;
     }
 
     public async Task Consume(ConsumeContext<IndustryFailedEvent> context)
@@ -24,6 +33,14 @@ public class IndustryFailedEventConsumer : IConsumer<IndustryFailedEvent>
         _logger.LogInformation($"Integration with industry failed - OrderId: {context.Message.OrderId}");
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<IndustryFailedEvent>.ShortName);
+
+        var order = await _orderRepository.GetById(context.Message.OrderId);
+        order.UpdateStatus(OrderStatus.IndustryFailed);
+
+        var orderStatusHistory = new OrderStatusHistory(order.Id, OrderStatus.IndustryFailed);
+
+        await _orderRepository.Update(order);
+        await _orderStatusHistoryRepository.Add(orderStatusHistory);
 
         _logger.LogInformation("Rollback to cart api");
 

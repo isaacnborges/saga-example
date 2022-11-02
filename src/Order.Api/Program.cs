@@ -1,5 +1,7 @@
 using MassTransit;
+using MongoDB.Driver;
 using Order.Domain.Infra.ApiServices;
+using Order.Domain.Infra.Repositories;
 using Order.Domain.Interfaces;
 using Order.Domain.Saga;
 using Order.Domain.Services;
@@ -29,10 +31,29 @@ builder.Services.AddHttpClient<IPaymentApiService, PaymentApiService>("Payment",
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+builder.Services.AddMongoDbContext(builder.Configuration);
+
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
+
+var connectionString = builder.Configuration.GetConnectionString("MongoDb");
+var databaseName = "saga-example";
+
+builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
+builder.Services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
 
 builder.Services.AddMassTransit(x =>
 {
+    x.AddMongoDbOutbox(o =>
+    {
+        o.DisableInboxCleanupService();
+        o.ClientFactory(provider => provider.GetRequiredService<IMongoClient>());
+        o.DatabaseFactory(provider => provider.GetRequiredService<IMongoDatabase>());
+
+        o.UseBusOutbox(bo => bo.DisableDeliveryService());
+    });
+
     x.SetKebabCaseEndpointNameFormatter();
 
     x.UsingRabbitMq((ctx, cfg) =>
@@ -42,11 +63,13 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(ctx);
     });
 
-    x.AddSagaStateMachine<OrderStateMachine, OrderState>(typeof(OrderStateMachineDefinition))
+    x.AddSagaStateMachine<OrderStateMachine, OrderState, OrderStateMachineDefinition>()
         .MongoDbRepository(r =>
         {
-            r.Connection = "mongodb://mongo:mongo@localhost:27017";
-            r.DatabaseName = "saga-orders";
+            //r.Connection = "mongodb://mongo:mongo@localhost:27017";
+            //r.DatabaseName = "saga-orders";
+            r.ClientFactory(provider => provider.GetRequiredService<IMongoClient>());
+            r.DatabaseFactory(provider => provider.GetRequiredService<IMongoDatabase>());
         });
 });
 

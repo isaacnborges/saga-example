@@ -50,6 +50,9 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
         During(PaymentConfirmedState,
             When(OrderProcessedEvent)
                 .TransitionTo(OrderFinalizeState));
+
+        During(OrderFinalizeState,
+            Ignore(IndustryFailedEvent));
     }
 
     private void ConfigureCorrelationId()

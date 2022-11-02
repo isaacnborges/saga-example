@@ -28,19 +28,22 @@ public class IntegrateIndustryCommandConsumer : IConsumer<IntegrateIndustryComma
 
 
         if (SimulateIntegrationWithIndustry())
-            await IndustrySuccessfully(context);
+        {
+            await SendIndustrySuccessfully(context);
+            return;
+        }
 
-        await IndustryFailed(context);
+        await SendIndustryFailed(context);
     }
 
-    private async Task IndustryFailed(ConsumeContext<IntegrateIndustryCommand> context)
+    private async Task SendIndustryFailed(ConsumeContext<IntegrateIndustryCommand> context)
     {
         var evento = new IndustryFailedEvent(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
         await _bus.Publish(evento);
         _logger.LogInformation($"Send IndustryFailedEvent - OrderId: {evento.OrderId}");
     }
 
-    private async Task IndustrySuccessfully(ConsumeContext<IntegrateIndustryCommand> context)
+    private async Task SendIndustrySuccessfully(ConsumeContext<IntegrateIndustryCommand> context)
     {
         var @event = new IndustryIntegratedEvent(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
         await _bus.Publish(@event);

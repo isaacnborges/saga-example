@@ -1,2 +1,9 @@
 ﻿namespace Order.Domain.Models;
-public record Order(Guid OrderId, string CustomerName);
+public class Order
+{
+    public Guid Id { get; set; }
+    public string CustomerName { get; set; }
+    public OrderStatus Status { get; set; }
+
+    public void UpdateStatus(OrderStatus status) => Status = status;
+}

@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MongoDB.Driver;
 using Order.Domain.Infra.ApiServices;
+using Order.Domain.Infra.Repositories;
 using Order.Domain.Interfaces;
 using Saga.Core;
 using Saga.Core.Extensions;
@@ -24,16 +26,38 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
         .ConfigureHostConfiguration(config => config.AddEnvironmentVariables())
         .ConfigureServices((hostContext, services) =>
         {
+            services.AddMongoDbContext(hostContext.Configuration);
+
+            var connectionString = hostContext.Configuration.GetConnectionString("MongoDb");
+            var databaseName = "saga-example";
+
+            services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
+            services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
+
             services.AddHttpClient<ICartApiService, CartApiService>("Cart", client =>
             {
                 client.BaseAddress = new Uri(hostContext.Configuration["Integrations:Cart:BaseUrl"]);
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
 
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
+
             var settings = hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>();
 
             services.AddMassTransit(x =>
             {
+                x.AddMongoDbOutbox(o =>
+                {
+                    o.QueryDelay = TimeSpan.FromSeconds(1);
+                    o.ClientFactory(provider => provider.GetRequiredService<IMongoClient>());
+                    o.DatabaseFactory(provider => provider.GetRequiredService<IMongoDatabase>());
+
+                    o.DuplicateDetectionWindow = TimeSpan.FromSeconds(30);
+
+                    o.UseBusOutbox();
+                });
+
                 var entryAssembly = Assembly.GetEntryAssembly();
 
                 x.AddConsumers(entryAssembly);
