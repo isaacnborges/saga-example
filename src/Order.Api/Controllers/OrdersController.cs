@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Order.Api.Dtos;
 using Order.Domain.Interfaces;
 using Order.Domain.Services;
 
@@ -36,8 +37,8 @@ public class OrdersController : ControllerBase
         var paymentResponse = await _paymentApiService.PreAuthorizeOrders();
         _logger.LogInformation($"Pedidos pré autorizados - {paymentResponse}");
 
-        await _orderService.CreateOrder();
+        var orderResponse = (OrderResponse)await _orderService.CreateOrder();
 
-        return Accepted("Pedidos aceitos!");
+        return Accepted(orderResponse);
     }
 }

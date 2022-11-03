@@ -32,9 +32,9 @@ public class OrderProcessedEventConsumer : IConsumer<OrderProcessedEvent>
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentAuthorizedEvent>.ShortName);
 
         var order = await _orderRepository.GetById(context.Message.OrderId);
-        order.UpdateStatus(OrderStatus.Finalize);
+        order.UpdateStatus(OrderStatus.Finalized);
 
-        var orderStatusHistory = new OrderStatusHistory(order.Id, OrderStatus.Finalize);
+        var orderStatusHistory = new OrderStatusHistory(order.Id, OrderStatus.Finalized);
 
         await _orderRepository.Update(order);
         await _orderStatusHistoryRepository.Add(orderStatusHistory);

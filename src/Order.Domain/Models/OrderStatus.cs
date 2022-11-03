@@ -1,11 +1,26 @@
-﻿namespace Order.Domain.Models;
+﻿using System.ComponentModel;
+
+namespace Order.Domain.Models;
 public enum OrderStatus
 {
+    [Description("Order Created")]
     Created,
+
+    [Description("Payment Authorized")]
     PaymentAuthorized,
+
+    [Description("Order Integrated with Industry")]
     IndustryIntegrated,
+
+    [Description("Payment Confirmed")]
     PaymentConfirmed,
-    Finalize,
+
+    [Description("Order Finalized")]
+    Finalized,
+
+    [Description("Order Industry Failed")]
     IndustryFailed,
+
+    [Description("Order Canceled")]
     Canceled
 }

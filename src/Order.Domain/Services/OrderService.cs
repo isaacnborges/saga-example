@@ -1,4 +1,6 @@
 ﻿using Bogus;
+using Bogus.DataSets;
+using Bogus.Extensions.Brazil;
 using MassTransit;
 using MassTransit.MongoDbIntegration;
 using Microsoft.Extensions.Logging;
@@ -27,13 +29,24 @@ public class OrderService : IOrderService
         _orderStatusHistoryRepository = orderStatusHistoryRepository;
     }
 
-    public async Task CreateOrder()
+    public async Task<Models.Order> CreateOrder()
     {
         var order = new Faker<Models.Order>().CustomInstantiator(x => new Models.Order
         {
             Id = Guid.NewGuid(),
             CustomerName = x.Person.FullName,
-            Status = OrderStatus.Created
+            Cnpj = new Company().Cnpj().Replace(".", "").Replace("-", "").Replace("/", ""),
+            Status = OrderStatus.Created,
+            Items = new List<OrderItem>
+            {
+                new OrderItem
+                {
+                    ProductId = Guid.NewGuid(),
+                    Description = x.Commerce.ProductName(),
+                    Quantity = x.Random.Int(1, 99),
+                    Value = x.Random.Decimal(50, 999)
+                }
+            }
         }).Generate();
 
         var orderStatusHistory = new OrderStatusHistory(order.Id, OrderStatus.Created);
@@ -44,5 +57,7 @@ public class OrderService : IOrderService
         _logger.LogInformation("Pedido criado");
 
         await _bus.Publish(new OrderCreatedEvent(order.Id, order.CustomerName, InVar.Timestamp));
+
+        return order;
     }
 }
