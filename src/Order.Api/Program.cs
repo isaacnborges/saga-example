@@ -66,23 +66,15 @@ builder.Services.AddMassTransit(x =>
     x.AddSagaStateMachine<OrderStateMachine, OrderState, OrderStateMachineDefinition>()
         .MongoDbRepository(r =>
         {
-            //r.Connection = "mongodb://mongo:mongo@localhost:27017";
-            //r.DatabaseName = "saga-orders";
             r.ClientFactory(provider => provider.GetRequiredService<IMongoClient>());
             r.DatabaseFactory(provider => provider.GetRequiredService<IMongoDatabase>());
         });
 });
 
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapControllers();
 

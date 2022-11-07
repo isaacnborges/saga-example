@@ -2,9 +2,7 @@
 using Bogus.DataSets;
 using Bogus.Extensions.Brazil;
 using MassTransit;
-using MassTransit.MongoDbIntegration;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using Order.Domain.Interfaces;
 using Order.Domain.Models;
 using Saga.Contracts;
@@ -54,9 +52,9 @@ public class OrderService : IOrderService
         await _orderRepository.Add(order);
         await _orderStatusHistoryRepository.Add(orderStatusHistory);
 
-        _logger.LogInformation("Pedido criado");
-
         await _bus.Publish(new OrderCreatedEvent(order.Id, order.CustomerName, InVar.Timestamp));
+
+        _logger.LogInformation("Pedido criado");
 
         return order;
     }

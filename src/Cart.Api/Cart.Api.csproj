@@ -11,7 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cart.Domain\Cart.Domain.csproj" />
     <ProjectReference Include="..\Saga.Core\Saga.Core.csproj" />
   </ItemGroup>
 
