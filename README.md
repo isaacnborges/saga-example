@@ -32,7 +32,7 @@ This solution contains some APIs and some workers (consumers/publishers) that co
 - Payment.Worker: Project that simulate authorize and confirm payments;
 - Saga.Core: Cross project to facilitate commons implementations between the projects;
 
-### Urls
+### URLs
 - RabbitMQ: http://localhost:15672/ - guest/guest
 - Jaeger: http://localhost:16686/
 - Order.Api: http://localhost:4000/swagger/
