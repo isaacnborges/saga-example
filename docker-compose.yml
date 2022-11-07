@@ -1,16 +1,25 @@
-version: "3.8"
+version: "3.9"
+
+networks:
+  sagaexample:
+
 services:
 
   rabbitmq:  
     image: masstransit/rabbitmq:latest
-    container_name: "saga-example-rabbitmq"
+    container_name: "rabbitmq"
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    networks:
+     - sagaexample
       
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: "saga-example-jaeger"
+    container_name: "jaeger"
     ports:
       - "5775:5775/udp"
       - "6831:6831/udp"
@@ -21,12 +30,111 @@ services:
       - "14268:14268"
       - "14269:14269"
       - "9411:9411"
+    networks:
+     - sagaexample
 
   mongo:
     image: mongo:5.0.5
-    container_name: "saga-example-mongo"
+    container_name: "mongo"
     ports:
       - "27017:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongo
       - MONGO_INITDB_ROOT_PASSWORD=mongo
+    networks:
+     - sagaexample
+
+  cart-api:
+    image: cart-api
+    container_name: cart-api
+    build:
+        context: . 
+        dockerfile: src/Cart.Api/Dockerfile
+    environment:
+      - OpenTelemetrySettings__AgentHost=jaeger
+    ports:
+      - "4001:80"
+    depends_on:
+      - mongo
+    networks:
+    - sagaexample
+
+  payment-api:
+    image: payment-api
+    container_name: payment-api
+    build:
+        context: .
+        dockerfile: src/Payment.Api/Dockerfile
+    environment:
+      - OpenTelemetrySettings__AgentHost=jaeger
+    ports:
+      - "4002:80"
+    depends_on:
+      - mongo
+    networks:
+    - sagaexample
+
+  order-api:
+    image: order-api
+    container_name: order-api
+    build:
+        context: . 
+        dockerfile: src/Order.Api/Dockerfile
+    environment:
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
+      - OpenTelemetrySettings__AgentHost=jaeger
+      - Integrations__Cart__BaseUrl=http://cart-api/
+      - Integrations__Payment__BaseUrl=http://payment-api/
+    ports:
+      - "4000:80"
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+    - sagaexample
+
+  order-worker:
+    image: order-worker
+    container_name: order-worker
+    build:
+        context: .
+        dockerfile: src/Order.Worker/Dockerfile
+    environment:
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
+      - OpenTelemetrySettings__AgentHost=jaeger
+    depends_on:
+      - mongo
+    networks:
+    - sagaexample
+
+  order-vendor-worker:
+    image: order-vendor-worker
+    container_name: order-vendor-worker
+    build:
+        context: .
+        dockerfile: src/OrderVendor.Worker/Dockerfile
+    environment:
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
+      - OpenTelemetrySettings__AgentHost=jaeger
+    depends_on:
+      - mongo
+    networks:
+    - sagaexample
+
+  payment-worker:
+    image: payment-worker
+    container_name: payment-worker
+    build:
+        context: .
+        dockerfile: src/Payment.Worker/Dockerfile
+    environment:
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
+      - OpenTelemetrySettings__AgentHost=jaeger
+    depends_on:
+      - mongo
+    networks:
+    - sagaexample
