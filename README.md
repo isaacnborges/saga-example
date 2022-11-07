@@ -19,7 +19,7 @@ After cloning this repository go into the directory and run `docker-compose up -
 
 ## Informations
 
-This solution contains some APIs and some workers (consumers/publishers) that communicate with each other using HTTP request or [RabbitMQ](https://www.rabbitmq.com/) to implementing the SAGA pattern.
+This solution contains some APIs and some workers (consumers/publishers) that communicate with each other using synchronous communication with [HTTP request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) or asynchronous messaging with [RabbitMQ](https://www.rabbitmq.com/) to implementing the SAGA pattern.
 
 ### Projects
 - Cart.Api: API responsible for management the carts;
