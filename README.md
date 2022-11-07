@@ -1,6 +1,6 @@
 # saga-example
 
-This project shows how to implement the [saga pattern](https://microservices.io/patterns/data/saga.html) using [MassTransit](https://masstransit-project.com/)
+This project shows how to implement the [SAGA pattern](https://microservices.io/patterns/data/saga.html) using [MassTransit](https://masstransit-project.com/)
 
 
 ## Dependencies 
@@ -19,7 +19,7 @@ After cloning this repository go into the directory and run `docker-compose up -
 
 ## Informations
 
-This solution contains some APIs and some workers (consumers/publishers) that communicate with each other using HTTP requst or [RabbitMQ](https://www.rabbitmq.com/).
+This solution contains some APIs and some workers (consumers/publishers) that communicate with each other using HTTP request or [RabbitMQ](https://www.rabbitmq.com/) to implementing the SAGA pattern.
 
 ### Projects
 - Cart.Api: API responsible for management the carts;
