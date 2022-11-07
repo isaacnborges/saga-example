@@ -65,8 +65,8 @@ services:
     build:
         context: .
         dockerfile: src/Payment.Api/Dockerfile
-    environment:
-      - OpenTelemetrySettings__AgentHost=jaeger
+    env_file:
+      - .env
     ports:
       - "4002:80"
     depends_on:
@@ -80,12 +80,8 @@ services:
     build:
         context: . 
         dockerfile: src/Order.Api/Dockerfile
-    environment:
-      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
-      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
-      - OpenTelemetrySettings__AgentHost=jaeger
-      - Integrations__Cart__BaseUrl=http://cart-api/
-      - Integrations__Payment__BaseUrl=http://payment-api/
+    env_file:
+      - .env
     ports:
       - "4000:80"
     depends_on:
@@ -100,10 +96,8 @@ services:
     build:
         context: .
         dockerfile: src/Order.Worker/Dockerfile
-    environment:
-      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
-      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
-      - OpenTelemetrySettings__AgentHost=jaeger
+    env_file:
+      - .env
     depends_on:
       - mongo
     networks:
@@ -115,10 +109,8 @@ services:
     build:
         context: .
         dockerfile: src/OrderVendor.Worker/Dockerfile
-    environment:
-      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
-      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
-      - OpenTelemetrySettings__AgentHost=jaeger
+    env_file:
+      - .env
     depends_on:
       - mongo
     networks:
@@ -130,10 +122,8 @@ services:
     build:
         context: .
         dockerfile: src/Payment.Worker/Dockerfile
-    environment:
-      - ConnectionStrings__RabbitMq=amqp://guest:guest@rabbitmq:5672
-      - ConnectionStrings__MongoDb=mongodb://mongo:mongo@mongo:27017
-      - OpenTelemetrySettings__AgentHost=jaeger
+    env_file:
+      - .env
     depends_on:
       - mongo
     networks:
