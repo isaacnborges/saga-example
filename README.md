@@ -33,8 +33,9 @@ This solution contains some APIs and some workers (consumers/publishers) that co
 - Saga.Core: Cross project to facilitate commons implementations between the projects;
 
 ### URLs
-- RabbitMQ: http://localhost:15672/ - guest/guest
-- Jaeger: http://localhost:16686/
 - Order.Api: http://localhost:4000/swagger/
 - Cart.Api: http://localhost:4001/swagger/
 - Payment.Api: http://localhost:4002/swagger/
+- Jaeger: http://localhost:16686/
+- RabbitMQ: http://localhost:15672/ - `guest/guest`
+- MongoDB: `mongodb://mongo:mongo@localhost:27017`
