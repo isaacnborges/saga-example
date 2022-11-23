@@ -7,6 +7,7 @@ using Order.Domain.Saga;
 using Order.Domain.Services;
 using Saga.Core;
 using Saga.Core.Extensions;
+using Saga.Core.PipeObservers;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,6 +61,10 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(builder.Configuration.GetConnectionString("RabbitMq"));
 
+        cfg.ConnectReceiveObserver(new LoggingReceiveObserver());
+        cfg.ConnectConsumeObserver(new LoggingConsumeObserver());
+        cfg.ConnectSendObserver(new LoggingSendObserver());
+        
         cfg.ConfigureEndpoints(ctx);
     });
 
