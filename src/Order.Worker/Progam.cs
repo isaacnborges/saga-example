@@ -11,6 +11,8 @@ using Saga.Core;
 using Saga.Core.Extensions;
 using Serilog;
 using System.Reflection;
+using Microsoft.Extensions.Options;
+using Saga.Core.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Worker");
@@ -43,8 +45,9 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
 
-            var settings = hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>();
-
+            services.ConfigureMessageBusOptionsExtension(hostContext.Configuration.GetSection(nameof(MessageBusOptions)));
+            services.ConfigureMassTransitHostOptionsExtensions(hostContext.Configuration.GetSection(nameof(MassTransitHostOptions)));
+            
             services.AddMassTransit(x =>
             {
                 x.AddMongoDbOutbox(o =>
@@ -70,17 +73,20 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
                 x.UsingRabbitMq((ctx, cfg) =>
                 {
-                    cfg.Host(hostContext.Configuration.GetConnectionString("RabbitMq"));
+                    var options = ctx.GetRequiredService<IOptionsMonitor<MessageBusOptions>>().CurrentValue;
+                    
+                    cfg.Host(options.ConnectionString);
+                    
+                    cfg.UseMessageRetry(retry
+                        => retry.Incremental(
+                            retryLimit: options.RetryLimit,
+                            initialInterval: options.InitialInterval,
+                            intervalIncrement: options.IntervalIncrement));
 
                     cfg.ConfigureEndpoints(ctx);
                 });
             });
-
-            services.AddOptions<MassTransitHostOptions>().Configure(options =>
-            {
-                options.WaitUntilStarted = true;
-            });
-
-            services.AddOpenTelemetry(settings);
+            
+            services.AddOpenTelemetry(hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>());
         })
         .UseSerilog();

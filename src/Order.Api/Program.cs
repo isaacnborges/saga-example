@@ -1,4 +1,5 @@
 using MassTransit;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Order.Domain.Infra.ApiServices;
 using Order.Domain.Infra.Repositories;
@@ -7,6 +8,7 @@ using Order.Domain.Saga;
 using Order.Domain.Services;
 using Saga.Core;
 using Saga.Core.Extensions;
+using Saga.Core.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +45,9 @@ var databaseName = "saga-example";
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
 builder.Services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
 
+builder.Services.ConfigureMessageBusOptionsExtension(builder.Configuration.GetSection(nameof(MessageBusOptions)));
+builder.Services.ConfigureMassTransitHostOptionsExtensions(builder.Configuration.GetSection(nameof(MassTransitHostOptions)));
+
 builder.Services.AddMassTransit(x =>
 {
     x.AddMongoDbOutbox(o =>
@@ -58,7 +63,15 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMq"));
+        var options = ctx.GetRequiredService<IOptionsMonitor<MessageBusOptions>>().CurrentValue;
+                    
+        cfg.Host(options.ConnectionString);
+                    
+        cfg.UseMessageRetry(retry
+            => retry.Incremental(
+                retryLimit: options.RetryLimit,
+                initialInterval: options.InitialInterval,
+                intervalIncrement: options.IntervalIncrement));
 
         cfg.ConfigureEndpoints(ctx);
     });
