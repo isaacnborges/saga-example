@@ -11,6 +11,7 @@ using Saga.Core;
 using Saga.Core.Extensions;
 using Serilog;
 using System.Reflection;
+using Saga.Core.PipeObservers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Worker");
@@ -72,6 +73,10 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
                 {
                     cfg.Host(hostContext.Configuration.GetConnectionString("RabbitMq"));
 
+                    cfg.ConnectReceiveObserver(new LoggingReceiveObserver());
+                    cfg.ConnectConsumeObserver(new LoggingConsumeObserver());
+                    cfg.ConnectPublishObserver(new LoggingPublishObserver());
+                    cfg.ConnectSendObserver(new LoggingSendObserver());
                     cfg.ConfigureEndpoints(ctx);
                 });
             });
