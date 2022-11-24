@@ -9,6 +9,7 @@ using Order.Domain.Services;
 using Saga.Core;
 using Saga.Core.Extensions;
 using Saga.Core.Options;
+using Saga.Core.PipeObservers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Api");

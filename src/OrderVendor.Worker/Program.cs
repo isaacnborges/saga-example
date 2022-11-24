@@ -10,6 +10,7 @@ using Serilog;
 using System.Reflection;
 using Microsoft.Extensions.Options;
 using Saga.Core.Options;
+using Saga.Core.PipeObservers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order-Vendor Worker");
