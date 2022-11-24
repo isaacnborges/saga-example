@@ -9,7 +9,6 @@ using Order.Domain.Services;
 using Saga.Core;
 using Saga.Core.Extensions;
 using Saga.Core.Options;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Api");
@@ -73,6 +72,10 @@ builder.Services.AddMassTransit(x =>
                 initialInterval: options.InitialInterval,
                 intervalIncrement: options.IntervalIncrement));
 
+        cfg.ConnectReceiveObserver(new LoggingReceiveObserver());
+        cfg.ConnectConsumeObserver(new LoggingConsumeObserver());
+        cfg.ConnectSendObserver(new LoggingSendObserver());
+        
         cfg.ConfigureEndpoints(ctx);
     });
 

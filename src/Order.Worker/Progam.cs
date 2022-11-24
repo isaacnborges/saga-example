@@ -1,4 +1,4 @@
-﻿using MassTransit;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +83,10 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
                             initialInterval: options.InitialInterval,
                             intervalIncrement: options.IntervalIncrement));
 
+                    cfg.ConnectReceiveObserver(new LoggingReceiveObserver());
+                    cfg.ConnectConsumeObserver(new LoggingConsumeObserver());
+                    cfg.ConnectPublishObserver(new LoggingPublishObserver());
+                    cfg.ConnectSendObserver(new LoggingSendObserver());
                     cfg.ConfigureEndpoints(ctx);
                 });
             });
