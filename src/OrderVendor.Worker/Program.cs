@@ -1,16 +1,18 @@
-﻿using MassTransit;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using Saga.Core;
-using Saga.Core.Extensions;
-using Serilog;
-using System.Reflection;
-using Saga.Core.PipeObservers;
 using OrderVendor.Worker.Publishers;
 using OrderVendor.Worker.Publishers.Interfaces;
+using Saga.Core;
+using Saga.Core.Extensions;
+using Saga.Core.Options;
+using Saga.Core.PipeObservers;
+using Serilog;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order-Vendor Worker");
@@ -32,10 +34,10 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
             services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
             services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
 
-            services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
-            services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
+            RegisterPublishers(services);
 
-            var settings = hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>();
+            services.ConfigureMessageBusOptionsExtension(hostContext.Configuration.GetSection(nameof(MessageBusOptions)));
+            services.ConfigureMassTransitHostOptionsExtensions(hostContext.Configuration.GetSection(nameof(MassTransitHostOptions)));
 
             services.AddMassTransit(x =>
             {
@@ -62,7 +64,15 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
                 x.UsingRabbitMq((ctx, cfg) =>
                 {
-                    cfg.Host(hostContext.Configuration.GetConnectionString("RabbitMq"));
+                    var options = ctx.GetRequiredService<IOptionsMonitor<MessageBusOptions>>().CurrentValue;
+
+                    cfg.Host(options.ConnectionString);
+
+                    cfg.UseMessageRetry(retry
+                        => retry.Incremental(
+                            retryLimit: options.RetryLimit,
+                            initialInterval: options.InitialInterval,
+                            intervalIncrement: options.IntervalIncrement));
 
                     cfg.ConnectReceiveObserver(new LoggingReceiveObserver());
                     cfg.ConnectConsumeObserver(new LoggingConsumeObserver());
@@ -73,11 +83,12 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
                 });
             });
 
-            services.AddOptions<MassTransitHostOptions>().Configure(options =>
-            {
-                options.WaitUntilStarted = true;
-            });
-
-            services.AddOpenTelemetry(settings);
+            services.AddOpenTelemetry(hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>());
         })
         .UseSerilog();
+
+static void RegisterPublishers(IServiceCollection services)
+{
+    services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
+    services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
+}

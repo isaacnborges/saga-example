@@ -1,4 +1,5 @@
 using MassTransit;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Order.Domain.Infra.ApiServices;
 using Order.Domain.Infra.Repositories;
@@ -7,8 +8,8 @@ using Order.Domain.Saga;
 using Order.Domain.Services;
 using Saga.Core;
 using Saga.Core.Extensions;
+using Saga.Core.Options;
 using Saga.Core.PipeObservers;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Api");
@@ -20,29 +21,19 @@ builder.Services.AddSwaggerGen();
 var settings = builder.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>();
 builder.Services.AddOpenTelemetry(settings);
 
-builder.Services.AddHttpClient<ICartApiService, CartApiService>("Cart", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Integrations:Cart:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
-
-builder.Services.AddHttpClient<IPaymentApiService, PaymentApiService>("Payment", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Integrations:Payment:BaseUrl"]);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+RegisterHttpClients(builder);
+RegisterDomainComponents(builder);
 
 builder.Services.AddMongoDbContext(builder.Configuration);
-
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
 
 var connectionString = builder.Configuration.GetConnectionString("MongoDb");
 var databaseName = "saga-example";
 
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
 builder.Services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
+
+builder.Services.ConfigureMessageBusOptionsExtension(builder.Configuration.GetSection(nameof(MessageBusOptions)));
+builder.Services.ConfigureMassTransitHostOptionsExtensions(builder.Configuration.GetSection(nameof(MassTransitHostOptions)));
 
 builder.Services.AddMassTransit(x =>
 {
@@ -59,12 +50,20 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMq"));
+        var options = ctx.GetRequiredService<IOptionsMonitor<MessageBusOptions>>().CurrentValue;
+
+        cfg.Host(options.ConnectionString);
+
+        cfg.UseMessageRetry(retry
+            => retry.Incremental(
+                retryLimit: options.RetryLimit,
+                initialInterval: options.InitialInterval,
+                intervalIncrement: options.IntervalIncrement));
 
         cfg.ConnectReceiveObserver(new LoggingReceiveObserver());
         cfg.ConnectConsumeObserver(new LoggingConsumeObserver());
         cfg.ConnectSendObserver(new LoggingSendObserver());
-        
+
         cfg.ConfigureEndpoints(ctx);
     });
 
@@ -84,3 +83,25 @@ app.UseSwaggerUI();
 app.MapControllers();
 
 app.Run();
+
+static void RegisterHttpClients(WebApplicationBuilder builder)
+{
+    builder.Services.AddHttpClient<ICartApiService, CartApiService>("Cart", client =>
+    {
+        client.BaseAddress = new Uri(builder.Configuration["Integrations:Cart:BaseUrl"]);
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
+
+    builder.Services.AddHttpClient<IPaymentApiService, PaymentApiService>("Payment", client =>
+    {
+        client.BaseAddress = new Uri(builder.Configuration["Integrations:Payment:BaseUrl"]);
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
+}
+
+static void RegisterDomainComponents(WebApplicationBuilder builder)
+{
+    builder.Services.AddScoped<IOrderService, OrderService>();
+    builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+    builder.Services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
+}
