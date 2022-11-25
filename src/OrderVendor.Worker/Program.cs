@@ -9,6 +9,8 @@ using Saga.Core.Extensions;
 using Serilog;
 using System.Reflection;
 using Saga.Core.PipeObservers;
+using OrderVendor.Worker.Publishers;
+using OrderVendor.Worker.Publishers.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order-Vendor Worker");
@@ -29,6 +31,9 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
             services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
             services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
+
+            services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
+            services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
 
             var settings = hostContext.Configuration.GetSection(nameof(OpenTelemetrySettings)).Get<OpenTelemetrySettings>();
 

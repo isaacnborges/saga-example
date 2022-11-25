@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using MassTransit.Metadata;
 using Microsoft.Extensions.Logging;
+using Order.Worker.Interfaces;
 using Saga.Contracts;
 using System.Diagnostics;
 
@@ -8,12 +9,12 @@ namespace Order.Worker.Consumers;
 public class OrderCreatedEventConsumer : IConsumer<OrderCreatedEvent>
 {
     private readonly ILogger<OrderCreatedEventConsumer> _logger;
-    private readonly IBus _bus;
+    private readonly IAuthorizePaymentPublisher _authorizePaymentPublisher;
 
-    public OrderCreatedEventConsumer(ILogger<OrderCreatedEventConsumer> logger, IBus bus)
+    public OrderCreatedEventConsumer(ILogger<OrderCreatedEventConsumer> logger, IAuthorizePaymentPublisher authorizePaymentPublisher)
     {
         _logger = logger;
-        _bus = bus;
+        _authorizePaymentPublisher = authorizePaymentPublisher;
     }
 
     public async Task Consume(ConsumeContext<OrderCreatedEvent> context)
@@ -24,8 +25,6 @@ public class OrderCreatedEventConsumer : IConsumer<OrderCreatedEvent>
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<OrderCreatedEvent>.ShortName);
 
-        var command = new AuthorizePaymentCommand(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
-        await _bus.Publish(command);
-        _logger.LogInformation($"Send AuthorizePaymentCommand - OrderId: {command.OrderId}");
+        await _authorizePaymentPublisher.Publish(context.Message.OrderId, context.Message.CustomerName);
     }
 }

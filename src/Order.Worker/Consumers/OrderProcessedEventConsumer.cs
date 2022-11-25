@@ -31,6 +31,13 @@ public class OrderProcessedEventConsumer : IConsumer<OrderProcessedEvent>
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentAuthorizedEvent>.ShortName);
 
+        await UpdateOrder(context);
+
+        _logger.LogInformation($"Order processed successfully - OrderId: {context.Message.OrderId}");
+    }
+
+    private async Task UpdateOrder(ConsumeContext<OrderProcessedEvent> context)
+    {
         var order = await _orderRepository.GetById(context.Message.OrderId);
         order.UpdateStatus(OrderStatus.Finalized);
 
@@ -38,7 +45,5 @@ public class OrderProcessedEventConsumer : IConsumer<OrderProcessedEvent>
 
         await _orderRepository.Update(order);
         await _orderStatusHistoryRepository.Add(orderStatusHistory);
-
-        _logger.LogInformation($"Order processed successfully - OrderId: {context.Message.OrderId}");
     }
 }

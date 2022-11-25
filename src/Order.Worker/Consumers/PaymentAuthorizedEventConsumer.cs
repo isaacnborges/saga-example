@@ -1,30 +1,30 @@
 ﻿using MassTransit;
 using MassTransit.Metadata;
 using Microsoft.Extensions.Logging;
-using Order.Domain.Infra.Repositories;
 using Order.Domain.Interfaces;
 using Order.Domain.Models;
+using Order.Worker.Interfaces;
 using Saga.Contracts;
 using System.Diagnostics;
 
 namespace Order.Worker.Consumers;
 public class PaymentAuthorizedEventConsumer : IConsumer<PaymentAuthorizedEvent>
 {
-    private readonly IBus _bus;
     private readonly ILogger<PaymentAuthorizedEventConsumer> _logger;
     private readonly IOrderRepository _orderRepository;
     private readonly IOrderStatusHistoryRepository _orderStatusHistoryRepository;
+    private readonly IIntegrateIndustryPublisher _integrateIndustryPublisher;
 
     public PaymentAuthorizedEventConsumer(
-        IBus bus, 
-        ILogger<PaymentAuthorizedEventConsumer> logger, 
-        IOrderRepository orderRepository, 
-        IOrderStatusHistoryRepository orderStatusHistoryRepository)
+        ILogger<PaymentAuthorizedEventConsumer> logger,
+        IOrderRepository orderRepository,
+        IOrderStatusHistoryRepository orderStatusHistoryRepository,
+        IIntegrateIndustryPublisher integrateIndustryPublisher)
     {
-        _bus = bus;
         _logger = logger;
         _orderRepository = orderRepository;
         _orderStatusHistoryRepository = orderStatusHistoryRepository;
+        _integrateIndustryPublisher = integrateIndustryPublisher;
     }
 
     public async Task Consume(ConsumeContext<PaymentAuthorizedEvent> context)
@@ -35,6 +35,13 @@ public class PaymentAuthorizedEventConsumer : IConsumer<PaymentAuthorizedEvent>
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentAuthorizedEvent>.ShortName);
 
+        await UpdateOrder(context);
+
+        await _integrateIndustryPublisher.Publish(context.Message.OrderId, context.Message.CustomerName);
+    }
+
+    private async Task UpdateOrder(ConsumeContext<PaymentAuthorizedEvent> context)
+    {
         var order = await _orderRepository.GetById(context.Message.OrderId);
         order.UpdateStatus(OrderStatus.PaymentAuthorized);
 
@@ -42,9 +49,5 @@ public class PaymentAuthorizedEventConsumer : IConsumer<PaymentAuthorizedEvent>
 
         await _orderRepository.Update(order);
         await _orderStatusHistoryRepository.Add(orderStatusHistory);
-
-        var command = new IntegrateIndustryCommand(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
-        await _bus.Publish(command);
-        _logger.LogInformation($"Send IntegrateIndustryCommand - OrderId: {command.OrderId}");
     }
 }

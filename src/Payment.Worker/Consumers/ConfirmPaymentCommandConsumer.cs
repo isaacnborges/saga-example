@@ -1,19 +1,20 @@
 ﻿using MassTransit;
 using MassTransit.Metadata;
 using Microsoft.Extensions.Logging;
+using Payment.Worker.Interfaces;
 using Saga.Contracts;
 using System.Diagnostics;
 
 namespace Payment.Worker.Consumers;
 public class ConfirmPaymentCommandConsumer : IConsumer<ConfirmPaymentCommand>
 {
-    private readonly IBus _bus;
     private readonly ILogger<ConfirmPaymentCommandConsumer> _logger;
+    private readonly IPaymentConfirmedPublisher _paymentConfirmedPublisher;
 
-    public ConfirmPaymentCommandConsumer(IBus bus, ILogger<ConfirmPaymentCommandConsumer> logger)
+    public ConfirmPaymentCommandConsumer(ILogger<ConfirmPaymentCommandConsumer> logger, IPaymentConfirmedPublisher paymentConfirmedPublisher)
     {
-        _bus = bus;
         _logger = logger;
+        _paymentConfirmedPublisher = paymentConfirmedPublisher;
     }
 
     public async Task Consume(ConsumeContext<ConfirmPaymentCommand> context)
@@ -26,8 +27,6 @@ public class ConfirmPaymentCommandConsumer : IConsumer<ConfirmPaymentCommand>
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<PaymentConfirmedEvent>.ShortName);
 
-        var @event = new PaymentConfirmedEvent(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
-        await _bus.Publish(@event);
-        _logger.LogInformation($"Send PaymentConfirmedEvent - OrderId: {@event.OrderId}");
+        await _paymentConfirmedPublisher.Publish(context.Message.OrderId, context.Message.CustomerName);
     }
 }

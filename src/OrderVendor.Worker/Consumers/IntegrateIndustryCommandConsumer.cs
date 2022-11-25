@@ -1,19 +1,25 @@
 ﻿using MassTransit;
 using MassTransit.Metadata;
 using Microsoft.Extensions.Logging;
+using OrderVendor.Worker.Publishers.Interfaces;
 using Saga.Contracts;
 using System.Diagnostics;
 
 namespace OrderVendor.Worker.Consumers;
 public class IntegrateIndustryCommandConsumer : IConsumer<IntegrateIndustryCommand>
 {
-    private readonly IBus _bus;
     private readonly ILogger<IntegrateIndustryCommandConsumer> _logger;
+    private readonly IIndustryIntegratedPublisher _industryIntegratedPublisher;
+    private readonly IIndustryFailedPublisher _industryFailedPublisher;
 
-    public IntegrateIndustryCommandConsumer(IBus bus, ILogger<IntegrateIndustryCommandConsumer> logger)
+    public IntegrateIndustryCommandConsumer(
+        ILogger<IntegrateIndustryCommandConsumer> logger, 
+        IIndustryIntegratedPublisher industryIntegratedPublisher, 
+        IIndustryFailedPublisher industryFailedPublisher)
     {
-        _bus = bus;
         _logger = logger;
+        _industryIntegratedPublisher = industryIntegratedPublisher;
+        _industryFailedPublisher = industryFailedPublisher;
     }
 
     public async Task Consume(ConsumeContext<IntegrateIndustryCommand> context)
@@ -29,25 +35,12 @@ public class IntegrateIndustryCommandConsumer : IConsumer<IntegrateIndustryComma
 
         if (SimulateFailedIntegrationWithIndustry())
         {
-            await SendIndustryFailed(context); 
+            await _industryFailedPublisher.Publish(context.Message.OrderId, context.Message.CustomerName);
             return;
         }
 
-        await SendIndustrySuccessfully(context);
-    }
 
-    private async Task SendIndustryFailed(ConsumeContext<IntegrateIndustryCommand> context)
-    {
-        var evento = new IndustryFailedEvent(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
-        await _bus.Publish(evento);
-        _logger.LogInformation($"Send IndustryFailedEvent - OrderId: {evento.OrderId}");
-    }
-
-    private async Task SendIndustrySuccessfully(ConsumeContext<IntegrateIndustryCommand> context)
-    {
-        var @event = new IndustryIntegratedEvent(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
-        await _bus.Publish(@event);
-        _logger.LogInformation($"Send IndustryIntegratedEvent - OrderId: {@event.OrderId}");
+        await _industryIntegratedPublisher.Publish(context.Message.OrderId, context.Message.CustomerName);
     }
 
     private static bool SimulateFailedIntegrationWithIndustry()

@@ -7,11 +7,13 @@ using MongoDB.Driver;
 using Order.Domain.Infra.ApiServices;
 using Order.Domain.Infra.Repositories;
 using Order.Domain.Interfaces;
+using Order.Worker.Interfaces;
+using Order.Worker.Publishers;
 using Saga.Core;
 using Saga.Core.Extensions;
+using Saga.Core.PipeObservers;
 using Serilog;
 using System.Reflection;
-using Saga.Core.PipeObservers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddSerilog("Order Worker");
@@ -34,6 +36,11 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
             services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
             services.AddSingleton(provider => provider.GetRequiredService<IMongoClient>().GetDatabase(databaseName));
+
+            services.AddScoped<IAuthorizePaymentPublisher, AuthorizePaymentPublisher>();
+            services.AddScoped<IConfirmPaymentPublisher, ConfirmPaymentPublisher>();
+            services.AddScoped<IIntegrateIndustryPublisher, IntegrateIndustryPublisher>();
+            services.AddScoped<IOrderProcessedPublisher, OrderProcessedPublisher>();
 
             services.AddHttpClient<ICartApiService, CartApiService>("Cart", client =>
             {

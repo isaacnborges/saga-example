@@ -34,6 +34,13 @@ public class IndustryFailedEventConsumer : IConsumer<IndustryFailedEvent>
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<IndustryFailedEvent>.ShortName);
 
+        await UpdateOrder(context);
+
+        await ReopenCart();
+    }
+
+    private async Task UpdateOrder(ConsumeContext<IndustryFailedEvent> context)
+    {
         var order = await _orderRepository.GetById(context.Message.OrderId);
         order.UpdateStatus(OrderStatus.IndustryFailed);
 
@@ -41,9 +48,11 @@ public class IndustryFailedEventConsumer : IConsumer<IndustryFailedEvent>
 
         await _orderRepository.Update(order);
         await _orderStatusHistoryRepository.Add(orderStatusHistory);
+    }
 
+    private async Task ReopenCart()
+    {
         _logger.LogInformation("Rollback to cart api");
-
         var cartResponse = await _cartApiService.ReopenCart();
         _logger.LogInformation($"Carrinho reaberto - {cartResponse}");
     }

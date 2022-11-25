@@ -1,19 +1,20 @@
 ﻿using MassTransit;
 using MassTransit.Metadata;
 using Microsoft.Extensions.Logging;
+using Payment.Worker.Interfaces;
 using Saga.Contracts;
 using System.Diagnostics;
 
 namespace Payment.Worker.Consumers;
 public class AuthorizePaymentCommandConsumer : IConsumer<AuthorizePaymentCommand>
 {
-    private readonly IBus _bus;
     private readonly ILogger<AuthorizePaymentCommandConsumer> _logger;
+    private readonly IPaymentAuthorizedPublisher _paymentAuthorizedPublisher;
 
-    public AuthorizePaymentCommandConsumer(IBus bus, ILogger<AuthorizePaymentCommandConsumer> logger)
+    public AuthorizePaymentCommandConsumer(ILogger<AuthorizePaymentCommandConsumer> logger, IPaymentAuthorizedPublisher paymentAuthorizedPublisher)
     {
-        _bus = bus;
         _logger = logger;
+        _paymentAuthorizedPublisher = paymentAuthorizedPublisher;
     }
 
     public async Task Consume(ConsumeContext<AuthorizePaymentCommand> context)
@@ -26,8 +27,6 @@ public class AuthorizePaymentCommandConsumer : IConsumer<AuthorizePaymentCommand
 
         await context.NotifyConsumed(timer.Elapsed, TypeMetadataCache<AuthorizePaymentCommand>.ShortName);
 
-        var @event = new PaymentAuthorizedEvent(context.Message.OrderId, context.Message.CustomerName, InVar.Timestamp);
-        await _bus.Publish(@event);
-        _logger.LogInformation($"Send PaymentAuthorizedEvent - OrderId: {@event.OrderId}");
+        await _paymentAuthorizedPublisher.Publish(context.Message.OrderId, context.Message.CustomerName);
     }
 }
