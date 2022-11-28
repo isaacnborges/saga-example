@@ -95,10 +95,10 @@ services:
     env_file:
       - .env
     depends_on:
+      - rabbitmq
       - mongo
     networks:
     - sagaexample
-
   order-vendor-worker:
     container_name: order-vendor-worker
     build:
@@ -107,10 +107,10 @@ services:
     env_file:
       - .env
     depends_on:
+      - rabbitmq
       - mongo
     networks:
     - sagaexample
-
   payment-worker:
     container_name: payment-worker
     build:
@@ -119,6 +119,7 @@ services:
     env_file:
       - .env
     depends_on:
+      - rabbitmq
       - mongo
     networks:
     - sagaexample

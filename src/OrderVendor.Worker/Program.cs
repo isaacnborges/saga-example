@@ -90,5 +90,5 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 static void RegisterPublishers(IServiceCollection services)
 {
     services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
-    services.AddScoped<IIndustryFailedPublisher, IndustryFailedPublisher>();
+    services.AddScoped<IIndustryIntegratedPublisher, IndustryIntegratedPublisher>();
 }
