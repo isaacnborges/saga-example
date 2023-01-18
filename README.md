@@ -111,6 +111,7 @@ sequenceDiagram
     Payment.Worker->>Order.Worker: PaymentAuthorizedEvent
     Order.Worker-->>OrderVendor.Worker: IntegrateIndustryCommand
     OrderVendor.Worker->>Order.Worker: IndustryFailedEvent
+    note right of Payment.Api: compensating transactions
     Order.Worker->>Cart.Api: PUT - cart/reopen
   end
 ```
