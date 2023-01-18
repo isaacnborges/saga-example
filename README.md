@@ -64,7 +64,7 @@ sequenceDiagram
     Order.Api->>Payment.Api: POST - Payment/pre-authorize
     Payment.Api->>Order.Api: 200
     Order.Api->Order.Api: Create Order
-    Order.Api-->>FE: 200
+    Order.Api-->>FE: 202 - Accepted
   end
 
   rect rgb(230, 255, 204)
@@ -102,7 +102,7 @@ sequenceDiagram
     Order.Api->>Payment.Api: POST - Payment/pre-authorize
     Payment.Api->>Order.Api: 200
     Order.Api->Order.Api: Create Order
-    Order.Api-->>FE: 200
+    Order.Api-->>FE: 202 - Accepted
   end  
   
   rect rgb(255, 224, 204)
