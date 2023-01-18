@@ -34,7 +34,7 @@ public class OrdersController : ControllerBase
         var cartResponse = await _cartApiService.FinalizeCart();
         _logger.LogInformation($"Carrinho finalizado - {cartResponse}");
 
-        var paymentResponse = await _paymentApiService.PreAuthorizeOrders();
+        var paymentResponse = await _paymentApiService.PreAuthorizeOrder();
         _logger.LogInformation($"Pedidos pré autorizados - {paymentResponse}");
 
         var orderResponse = (OrderResponse)await _orderService.CreateOrder();

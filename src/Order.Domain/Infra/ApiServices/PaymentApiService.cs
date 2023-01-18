@@ -14,7 +14,7 @@ public class PaymentApiService : IPaymentApiService
         _logger = logger;
     }
 
-    public async Task<string> PreAuthorizeOrders()
+    public async Task<string> PreAuthorizeOrder()
     {
         _logger.LogInformation("Integração com serviço de payment iniciada...");
         var requestUri = "payment/pre-authorize";

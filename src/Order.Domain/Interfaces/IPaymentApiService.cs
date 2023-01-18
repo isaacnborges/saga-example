@@ -2,5 +2,5 @@
 
 public interface IPaymentApiService
 {
-    Task<string> PreAuthorizeOrders();
+    Task<string> PreAuthorizeOrder();
 }

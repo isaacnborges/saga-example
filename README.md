@@ -39,3 +39,67 @@ This solution contains some APIs and some workers (consumers/publishers) that co
 - Jaeger: http://localhost:16686/
 - RabbitMQ: http://localhost:15672/ - `guest/guest`
 - MongoDB: `mongodb://mongo:mongo@localhost:27017`
+
+### Diagram
+#### Saga - Workflow
+```mermaid
+%%{init: {'theme':'forest'}}%%
+
+sequenceDiagram
+
+  participant FE
+  participant Order.Api
+  participant Cart.Api
+  participant Payment.Api
+  participant Order.Worker
+  participant Payment.Worker
+  participant OrderVendor.Worker
+  autonumber
+  
+  rect rgb(191, 223, 255)
+    note right of FE: order creation
+    FE->>Order.Api: POST /order
+    Order.Api->>Cart.Api: PUT - cart/finalize
+    Cart.Api->>Order.Api: 200
+    Order.Api->>Payment.Api: POST - Payment/pre-authorize
+    Payment.Api->>Order.Api: 200
+    Order.Api->Order.Api: Create Order
+    Order.Api-->>FE: 200
+  end
+
+  rect rgb(230, 255, 204)
+    note right of Order.Worker: saga execution coordinator
+    Order.Worker-->>Payment.Worker: AuthorizePaymentCommand
+    Payment.Worker->>Order.Worker: PaymentAuthorizedEvent
+    Order.Worker-->>OrderVendor.Worker: IntegrateIndustryCommand
+    OrderVendor.Worker->>Order.Worker: IndustryIntegratedEvent
+    Order.Worker-->>Payment.Worker: ConfirmPaymentCommand
+    Payment.Worker->>Order.Worker: PaymentConfirmedEvent
+    Order.Worker-->>Order.Worker: OrderProcessedEvent
+    Order.Worker-->>Order.Worker: Update Order
+  end
+```
+
+#### Saga - Failure to integrate with the industry
+```mermaid
+%%{init: {'theme':'forest'}}%%
+
+sequenceDiagram
+  participant FE
+  participant Order.Api
+  participant Cart.Api
+  participant Payment.Api
+  participant Order.Worker
+  participant Payment.Worker
+  participant OrderVendor.Worker
+  autonumber
+  
+  rect rgb(255, 224, 204)
+    note right of Order.Worker: saga execution coordinator
+    Order.Worker-->>Payment.Worker: AuthorizePaymentCommand
+    Payment.Worker->>Order.Worker: PaymentAuthorizedEvent
+    Order.Worker-->>OrderVendor.Worker: IntegrateIndustryCommand
+    OrderVendor.Worker->>Order.Worker: IndustryFailedEvent
+    Order.Worker->>Cart.Api: PUT - cart/reopen
+  end
+```
