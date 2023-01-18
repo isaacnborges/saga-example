@@ -93,6 +93,17 @@ sequenceDiagram
   participant Payment.Worker
   participant OrderVendor.Worker
   autonumber
+
+  rect rgb(191, 223, 255)
+    note right of FE: order creation
+    FE->>Order.Api: POST /order
+    Order.Api->>Cart.Api: PUT - cart/finalize
+    Cart.Api->>Order.Api: 200
+    Order.Api->>Payment.Api: POST - Payment/pre-authorize
+    Payment.Api->>Order.Api: 200
+    Order.Api->Order.Api: Create Order
+    Order.Api-->>FE: 200
+  end  
   
   rect rgb(255, 224, 204)
     note right of Order.Worker: saga execution coordinator
