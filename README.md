@@ -1,6 +1,6 @@
 # saga-example
 
-This project shows how to implement the [SAGA pattern](https://microservices.io/patterns/data/saga.html) using [MassTransit](https://masstransit-project.com/)
+This project shows how to implement the [SAGA pattern](https://microservices.io/patterns/data/saga.html) using [MassTransit](https://masstransit-project.com/). The application contains essential settings to work with observability using [OpenTelemetry](https://opentelemetry.io/).
 
 
 ## Dependencies 
