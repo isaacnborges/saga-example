@@ -49,8 +49,8 @@ services:
     build:
         context: . 
         dockerfile: src/Cart.Api/Dockerfile
-    environment:
-      - OpenTelemetrySettings__AgentHost=jaeger
+    env_file:
+      - .env
     ports:
       - "4001:80"
     depends_on:
